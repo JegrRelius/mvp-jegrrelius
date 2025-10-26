@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Regla general: Solo usuarios autenticados pueden acceder
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper para obtener el rol del usuario
+    function userRole() {
+      return request.auth.token.role;
+    }
+
+    // Helper para obtener el companyId del usuario
+    function userCompanyId() {
+      return request.auth.token.companyId;
+    }
+
+    // --- Companies ---
+    match /companies/{companyId} {
+      allow read: if isAuthenticated() && (
+        userRole() == 'SuperAdmin' || userCompanyId() == companyId
+      );
+      allow write: if isAuthenticated() && userRole() == 'SuperAdmin';
+    }
+
+    // --- Users ---
+    match /users/{userId} {
+      allow read, update, delete: if isAuthenticated() && (
+        request.auth.uid == userId || userRole() == 'SuperAdmin' || (
+          userRole() == 'AdminEmpresa' && resource.data.companyId == userCompanyId()
+        )
+      );
+      allow create: if isAuthenticated() && (
+        userRole() == 'SuperAdmin' || userRole() == 'AdminEmpresa'
+      );
+    }
+
+    // --- Clients ---
+    match /clients/{clientId} {
+      allow read, write: if isAuthenticated() && (
+        userRole() == 'SuperAdmin' || resource.data.companyId == userCompanyId() || (
+          userRole() == 'RevisorInterno' && request.method == 'get'
+        )
+      );
+      // RevisorInterno solo puede leer
+      allow update: if isAuthenticated() && userRole() == 'RevisorInterno' && request.method == 'get';
+    }
+
+    // --- DocumentTasks ---
+    match /documentTasks/{taskId} {
+      // AdminEmpresa y UsuarioEmpresa pueden leer/escribir si el companyId coincide
+      allow read, write: if isAuthenticated() && (
+        (resource.data.companyId == userCompanyId() &&
+          (userRole() == 'AdminEmpresa' || userRole() == 'UsuarioEmpresa')) ||
+        userRole() == 'SuperAdmin'
+      );
+      // RevisorInterno puede leer todo, pero solo modificar status y rejectionReason
+      allow update: if isAuthenticated() && userRole() == 'RevisorInterno' &&
+        request.resource.data.keys().hasOnly(['status', 'rejectionReason']);
+    }
+
+    // --- DocumentTemplates ---
+    match /documentTemplates/{templateId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && userRole() == 'SuperAdmin';
+    }
+
+    // --- AuditLog ---
+    match /auditLog/{logId} {
+      // Solo Cloud Functions pueden crear logs
+      allow create: if false; // Reemplazar por lógica de verificación de función si se requiere
+      allow read: if isAuthenticated() && userRole() == 'SuperAdmin';
+      allow update, delete: if false;
+    }
+  }
+}
+
+// Comentarios explicativos:
+// - Todas las reglas verifican autenticación.
+// - Los roles se obtienen del token de Firebase Auth.
+// - Las reglas de escritura y lectura están segmentadas por rol y pertenencia a companyId.
+// - Los logs solo pueden ser creados por el backend, nunca editados ni borrados por usuarios.
+// - RevisorInterno solo puede modificar status y rejectionReason en documentTasks.

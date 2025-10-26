@@ -1,0 +1,100 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* --- Estilos para el Nuevo Layout --- */
+
+.app-layout {
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar main";
+  grid-template-rows: 60px 1fr; /* Altura de la cabecera y el resto */
+  grid-template-columns: 240px 1fr; /* Ancho del sidebar y el resto */
+  height: 100vh;
+  width: 100vw;
+}
+
+.header {
+  grid-area: header;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  background-color: #343a40;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar nav ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav ul li a {
+  color: #adb5bd;
+  text-decoration: none;
+  display: block;
+  padding: 10px 0;
+}
+
+.sidebar nav ul li a:hover {
+  color: white;
+}
+
+.main-content {
+  grid-area: main;
+  overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+  padding: 20px;
+}
+
+/* Oculta el viejo título del dashboard, ahora está en el Header */
+.dashboard-header {
+  display: none;
+}
